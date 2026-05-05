@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h2>Профиль</h2>
+
+{% if current_user.avatar %}
+<img src="/{{ current_user.avatar }}"
+     style="width:150px; height:150px; border-radius:50%;">
+{% else %}
+<p>Нет фото</p>
+{% endif %}
+
+<h3 class="mt-3">{{ current_user.username }}</h3>
+
+<h4 class="mt-4">Изменить имя</h4>
+<form method="POST" action="/update_username">
+<input name="username" class="form-control" placeholder="Новое имя">
+<button class="btn btn-primary mt-2">Сохранить</button>
+</form>
+
+<h4 class="mt-4">Загрузить фото</h4>
+<form method="POST" action="/upload" enctype="multipart/form-data">
+<input type="file" name="file" class="form-control mt-2">
+<button class="btn btn-success mt-2">Загрузить</button>
+</form>
+
+<a href="/" class="btn btn-secondary mt-3">Назад</a>
+
+{% endblock %}

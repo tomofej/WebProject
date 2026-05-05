@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h2>Поиск города</h2>
+<form method="POST" action="/search">
+<input name="city" class="form-control" placeholder="Введите город">
+<button class="btn btn-primary mt-2">Найти</button>
+</form>
+
+<a href="/?favorite=1" class="btn btn-success mt-3">Только избранные</a>
+<a href="/" class="btn btn-secondary mt-3">Все города</a>
+
+<h3 class="mt-4">Карта</h3>
+<div id="map" style="height: 400px;"></div>
+
+<h3 class="mt-4">Сохранённые города</h3>
+<ul class="list-group">
+{% for p in places %}
+<li class="list-group-item">
+
+{% if p.is_favorite %}
+<span style="color: gold;">⭐</span>
+{% endif %}
+
+<strong>{{ p.city }}</strong> ({{ p.coordinates }})
+
+<button class="btn btn-sm btn-primary ms-2"
+        onclick="focusCity('{{ p.coordinates }}', '{{ p.city }}')">
+    Показать
+</button>
+
+<a href="/favorite/{{p.id}}" class="btn btn-sm btn-warning ms-2">
+    {% if p.is_favorite %}
+        Убрать
+    {% else %}
+        В избранное
+    {% endif %}
+</a>
+
+<a href="/delete/{{p.id}}" class="btn btn-sm btn-danger ms-2">
+    Удалить
+</a>
+
+</li>
+{% endfor %}
+</ul>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+var map = L.map('map').setView([55.75, 37.61], 2);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+}).addTo(map);
+
+var places = {{ places|tojson }};
+var markers = [];
+
+function addMarker(lat, lon, city, open=false) {
+    var marker = L.marker([lat, lon]).addTo(map)
+        .bindPopup("<b>" + city + "</b>");
+
+    if (open) marker.openPopup();
+    markers.push(marker);
+}
+
+if (places.length > 0) {
+    var last = places[places.length - 1];
+    if (last.coordinates) {
+        var coords = last.coordinates.split(' ');
+        var lon = parseFloat(coords[0]);
+        var lat = parseFloat(coords[1]);
+
+        map.setView([lat, lon], 10);
+        addMarker(lat, lon, last.city, true);
+    }
+}
+
+places.forEach(function(p) {
+    if (p.coordinates) {
+        var coords = p.coordinates.split(' ');
+        var lon = parseFloat(coords[0]);
+        var lat = parseFloat(coords[1]);
+
+        addMarker(lat, lon, p.city);
+    }
+});
+
+function focusCity(coordinates, city) {
+    var coords = coordinates.split(' ');
+    var lon = parseFloat(coords[0]);
+    var lat = parseFloat(coords[1]);
+
+    map.setView([lat, lon], 12);
+
+    markers.forEach(m => map.removeLayer(m));
+    markers = [];
+
+    addMarker(lat, lon, city, true);
+}
+</script>
+
+{% endblock %}
